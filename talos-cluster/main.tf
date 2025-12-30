@@ -581,19 +581,23 @@ resource "local_file" "worker_patches" {
           "vm.nr_hugepages" = tostring(each.value.openebs_hugepages_2mi)
         }
       } : {},
-      # OpenEBS disk configuration (when storage enabled and disk specified)
+      # OpenEBS Mayastor extraMount (bind /var/mnt/mayastor to /var/local/mayastor)
+      # Used with UserVolumeConfig which mounts at /var/mnt/<name>
       each.value.openebs_storage && each.value.openebs_disk != null ? {
-        disks = [
-          {
-            device = each.value.openebs_disk
-            partitions = [
-              {
-                size       = 0 # 0 means use all remaining space
-                mountpoint = "/var/local/mayastor"
-              }
-            ]
-          }
-        ]
+        kubelet = {
+          extraMounts = [
+            {
+              destination = "/var/local/mayastor"
+              type        = "bind"
+              source      = "/var/mnt/mayastor"
+              options = [
+                "bind",
+                "rshared",
+                "rw"
+              ]
+            }
+          ]
+        }
       } : {}
     )
   })
@@ -614,6 +618,39 @@ resource "local_file" "worker_tailscale_extension" {
       "TS_AUTHKEY=${var.tailscale_auth_key}",
       "TS_HOSTNAME=${coalesce(each.value.hostname, each.key)}"
     ]
+  })
+
+  file_permission = "0600"
+}
+
+# Generate per-node UserVolumeConfig for OpenEBS Mayastor storage
+# This creates a volume at /var/mnt/mayastor which is then bind-mounted to /var/local/mayastor
+# See: https://docs.siderolabs.com/talos/v1.11/reference/configuration/block/uservolumeconfig
+resource "local_file" "worker_openebs_volume" {
+  for_each = {
+    for k, v in var.worker_nodes : k => v
+    if v.openebs_storage && v.openebs_disk != null
+  }
+
+  filename = "${local.output_dir}/worker-${each.key}-openebs-volume.yaml"
+  # Build the correct CEL expression based on the disk path format:
+  # - /dev/disk/by-id/wwn-0xXXX -> match on disk.wwid (convert to naa.XXX format)
+  # - /dev/sdX or other paths -> match on disk.dev_path
+  content = yamlencode({
+    apiVersion = "v1alpha1"
+    kind       = "UserVolumeConfig"
+    name       = "mayastor"
+    provisioning = {
+      diskSelector = {
+        match = (
+          startswith(each.value.openebs_disk, "/dev/disk/by-id/wwn-0x")
+          ? "disk.wwid == 'naa.${replace(each.value.openebs_disk, "/dev/disk/by-id/wwn-0x", "")}'"
+          : "disk.dev_path == '${each.value.openebs_disk}'"
+        )
+      }
+      minSize = "10GiB"
+      grow    = true
+    }
   })
 
   file_permission = "0600"
