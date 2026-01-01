@@ -517,7 +517,7 @@ data "talos_machine_configuration" "worker" {
     [local.tailscale_machine_patch],
     [local.kubeprism_patch],
     var.openebs_hostpath_enabled ? [local.openebs_hostpath_patch] : [],
-    local.openebs_zfs_enabled ? [local.openebs_zfs_patch] : [],
+    # Note: ZFS extraMounts are added per-node in worker_patches based on zfs_pools config
     var.additional_worker_patches
   )
 }
@@ -560,10 +560,14 @@ resource "local_file" "worker_patches" {
           each.value.hostname != null ? { "kubernetes.io/hostname" = each.value.hostname } : {},
           each.value.arch != null ? { "kubernetes.io/arch" = each.value.arch } : {},
           each.value.os != null ? { "kubernetes.io/os" = each.value.os } : {},
-          # OpenEBS storage node labels (when enabled)
+          # OpenEBS Mayastor labels (when openebs_storage enabled)
           each.value.openebs_storage ? {
             "openebs.io/engine"       = "mayastor"
             "openebs.io/storage-node" = "true"
+          } : {},
+          # OpenEBS ZFS LocalPV labels (when zfs_pools configured)
+          length(each.value.zfs_pools) > 0 ? {
+            "openebs.io/zfs" = "true"
           } : {},
           # Additional node-specific labels
           each.value.node_labels
@@ -581,22 +585,39 @@ resource "local_file" "worker_patches" {
           "vm.nr_hugepages" = tostring(each.value.openebs_hugepages_2mi)
         }
       } : {},
-      # OpenEBS Mayastor extraMount (bind /var/mnt/mayastor to /var/local/mayastor)
-      # Used with UserVolumeConfig which mounts at /var/mnt/<name>
-      each.value.openebs_storage && each.value.openebs_disk != null ? {
+      # OpenEBS kubelet extraMounts (conditional based on storage type)
+      # - Mayastor: bind /var/mnt/mayastor to /var/local/mayastor (UserVolumeConfig)
+      # - ZFS LocalPV: bind mount for encryption keys directory
+      (each.value.openebs_storage && each.value.openebs_disk != null) || length(each.value.zfs_pools) > 0 ? {
         kubelet = {
-          extraMounts = [
-            {
-              destination = "/var/local/mayastor"
-              type        = "bind"
-              source      = "/var/mnt/mayastor"
-              options = [
-                "bind",
-                "rshared",
-                "rw"
-              ]
-            }
-          ]
+          extraMounts = concat(
+            # Mayastor extraMount
+            each.value.openebs_storage && each.value.openebs_disk != null ? [
+              {
+                destination = "/var/local/mayastor"
+                type        = "bind"
+                source      = "/var/mnt/mayastor"
+                options = [
+                  "bind",
+                  "rshared",
+                  "rw"
+                ]
+              }
+            ] : [],
+            # ZFS LocalPV extraMount for encryption keys
+            length(each.value.zfs_pools) > 0 ? [
+              {
+                destination = "/var/openebs/encr-keys"
+                type        = "bind"
+                source      = "/var/openebs/encr-keys"
+                options = [
+                  "bind",
+                  "rshared",
+                  "rw"
+                ]
+              }
+            ] : []
+          )
         }
       } : {}
     )
