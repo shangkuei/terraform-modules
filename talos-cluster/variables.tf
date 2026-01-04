@@ -95,14 +95,13 @@ variable "worker_nodes" {
     arch        = optional(string)          # kubernetes.io/arch (e.g., amd64, arm64)
     os          = optional(string)          # kubernetes.io/os (e.g., linux)
     node_labels = optional(map(string), {}) # Additional node-specific labels
-    # OpenEBS Replicated Storage configuration (uses UserVolumeConfig)
-    # NOTE: If the disk has existing partitions (LVM, etc.), you must wipe it first:
-    #   1. Remove disk config (set openebs_storage = false), apply config
-    #   2. Run: talosctl wipe disk <partition> --drop-partition
-    #   3. Re-enable openebs_storage and apply config
-    # See: https://docs.siderolabs.com/talos/v1.11/reference/configuration/block/uservolumeconfig
-    openebs_storage       = optional(bool, false)  # Enable OpenEBS storage on this node
-    openebs_disk          = optional(string)       # Storage disk device (e.g., /dev/nvme0n1, /dev/sdb)
+    # OpenEBS Mayastor (Replicated Storage) configuration
+    # Mayastor uses raw block devices directly via SPDK - no partitioning/formatting needed
+    # The disk specified here is used for DiskPool creation in Kubernetes (not managed by Talos)
+    # NOTE: The disk must be empty/unpartitioned. If it has partitions, wipe them first:
+    #   talosctl wipe disk <partition> --drop-partition
+    openebs_storage       = optional(bool, false)  # Enable OpenEBS Mayastor on this node (adds node labels + hugepages)
+    openebs_disk          = optional(string)       # Raw block device for Mayastor (e.g., /dev/sdb, /dev/disk/by-id/wwn-xxx)
     openebs_hugepages_2mi = optional(number, 1024) # Number of 2MiB hugepages (1024 = 2GiB, required for Mayastor)
     # OpenEBS ZFS LocalPV configuration - supports multiple pools per node
     zfs_pools = optional(list(object({
