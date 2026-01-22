@@ -16,8 +16,8 @@ output "tunnel_cname" {
 }
 
 output "tunnel_token" {
-  description = "Tunnel token for cloudflared to connect (sensitive)"
-  value       = cloudflare_zero_trust_tunnel_cloudflared.this.tunnel_secret
+  description = "Tunnel token for cloudflared to connect with `tunnel run --token` (sensitive)"
+  value       = data.cloudflare_zero_trust_tunnel_cloudflared_token.this.token
   sensitive   = true
 }
 

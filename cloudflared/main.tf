@@ -71,6 +71,13 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "this" {
   }
 }
 
+# Get the tunnel token for cloudflared connector
+# This token allows cloudflared to authenticate and fetch config from Cloudflare
+data "cloudflare_zero_trust_tunnel_cloudflared_token" "this" {
+  account_id = var.account_id
+  tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.this.id
+}
+
 # Create DNS records for the tunnel (optional)
 resource "cloudflare_dns_record" "tunnel_cname" {
   for_each = var.dns_records
