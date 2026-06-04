@@ -202,8 +202,8 @@ terraform-modules/
 │   ├── versions.tf
 │   └── README.md
 │
-├── AGENTS.md               # AI assistant guidance
-├── CLAUDE.md               # Claude Code specific guidance
+├── AGENTS.md               # AI assistant ground rules (vendor-neutral)
+├── CLAUDE.md               # Claude Code-specific ground rules
 └── README.md               # This file
 ```
 
@@ -214,6 +214,104 @@ terraform-modules/
 | Terraform | >= 1.5.0 | Infrastructure as Code |
 | terraform-docs | >= 0.16.0 | Documentation generation |
 | markdownlint | >= 0.32.0 | Markdown validation |
+
+## Module Conventions
+
+Each module follows consistent conventions for structure, variables, and outputs.
+
+### Module Structure
+
+Every module follows this layout:
+
+```text
+module-name/
+├── main.tf           # Primary resources
+├── variables.tf      # Input variables with descriptions
+├── outputs.tf        # Output values
+├── versions.tf       # Provider version constraints
+├── README.md         # Module documentation
+└── templates/        # Optional template files
+```
+
+### Variable Conventions
+
+- **Required variables**: No default value
+- **Optional variables**: Provide sensible defaults
+- **Sensitive variables**: Mark with `sensitive = true`
+- **Descriptions**: Always include clear descriptions
+- **Type constraints**: Use specific types (`string`, `number`, `bool`, `list`, `map`, `object`)
+
+Example:
+
+```hcl
+variable "cluster_name" {
+  description = "Name of the Kubernetes cluster"
+  type        = string
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version (e.g., v1.31.0)"
+  type        = string
+  default     = "v1.31.0"
+}
+
+variable "tailscale_auth_key" {
+  description = "Tailscale authentication key for joining the tailnet"
+  type        = string
+  sensitive   = true
+}
+```
+
+### Output Conventions
+
+- **Provide useful outputs**: Include values that consumers need
+- **Sensitive outputs**: Mark appropriately with `sensitive = true`
+- **Descriptions**: Always include descriptions
+
+## Workflows
+
+### Validation
+
+Format and validate before committing:
+
+```bash
+# Format check (entire repo)
+terraform fmt -check -recursive
+
+# Validate syntax (per module)
+cd talos-cluster && terraform init && terraform validate
+cd cloudflared && terraform init && terraform validate
+cd gitops && terraform init && terraform validate
+
+# Generate auto-docs
+terraform-docs markdown . > README.md
+
+# Markdown lint
+markdownlint '**/*.md'
+```
+
+### Testing
+
+Test module changes in dry-run mode:
+
+```bash
+terraform init
+terraform validate
+terraform plan -var-file=examples/basic.tfvars
+terraform output
+```
+
+### Module Development Workflow
+
+| Step | Action | Command |
+|------|--------|---------|
+| 1 | Read existing module code | — |
+| 2 | Update README documentation | — |
+| 3 | Modify Terraform files | — |
+| 4 | Format code | `terraform fmt` |
+| 5 | Validate syntax | `terraform validate` |
+| 6 | Update auto-docs | `terraform-docs markdown .` |
+| 7 | Test changes | `terraform plan` |
 
 ## Development
 
@@ -229,7 +327,7 @@ terraform-modules/
 
 2. Write initial README with module description and planned inputs/outputs
 
-3. Implement the module following conventions in [AGENTS.md](AGENTS.md)
+3. Implement the module following [Module Conventions](#module-conventions)
 
 4. Generate documentation:
 
@@ -254,6 +352,38 @@ terraform-modules/
 4. Validate and test changes
 5. Create version tag if releasing
 
+## Git Commit Convention
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```text
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types**:
+
+- `feat`: New functionality
+- `fix`: Bug fix
+- `docs`: Documentation update
+- `refactor`: Code restructuring
+- `test`: Add tests
+- `chore`: Maintenance
+
+**Scopes**: `talos-cluster`, `cloudflared`, `gitops`, `root` (repository-level)
+
+**Examples**:
+
+```bash
+feat(talos-cluster): add ZFS pool configuration support
+fix(cloudflared): correct tunnel config v5 migration
+docs(gitops): update FluxInstance configuration examples
+chore(root): update gitignore for terraform providers
+```
+
 ## Versioning
 
 This repository uses semantic versioning for module releases:
@@ -273,8 +403,8 @@ git push origin v1.0.0
 ## Contributing
 
 1. **Read the guides**:
-   - [AGENTS.md](AGENTS.md): AI assistant guidance (vendor-neutral)
-   - [CLAUDE.md](CLAUDE.md): Claude Code specific guidance
+   - [AGENTS.md](AGENTS.md): AI assistant ground rules (vendor-neutral)
+   - [CLAUDE.md](CLAUDE.md): Claude Code-specific ground rules
 
 2. **Create a feature branch**:
 
@@ -284,7 +414,7 @@ git push origin v1.0.0
 
 3. **Make changes**:
    - Update README documentation first
-   - Follow Terraform conventions
+   - Follow [Module Conventions](#module-conventions)
    - Run validation checks
 
 4. **Validate locally**:
@@ -295,12 +425,21 @@ git push origin v1.0.0
    markdownlint '**/*.md'
    ```
 
-5. **Create pull request**:
+5. **Create pull request** following [Git Commit Convention](#git-commit-convention):
 
    ```bash
    git push origin feature/my-feature
    gh pr create --title "feat(module): description" --body "Details"
    ```
+
+## External Resources
+
+- [Terraform Documentation](https://www.terraform.io/docs)
+- [Terraform Registry](https://registry.terraform.io/)
+- [Talos Linux](https://www.talos.dev/docs)
+- [Flux CD](https://fluxcd.io/docs)
+- [Cloudflare Developers](https://developers.cloudflare.com/)
+- [Tailscale](https://tailscale.com/kb)
 
 ## Related Projects
 
