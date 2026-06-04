@@ -257,7 +257,7 @@ terraform plan
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.0 |
 | <a name="requirement_cloudflare"></a> [cloudflare](#requirement\_cloudflare) | ~> 5.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.5 |
@@ -265,9 +265,9 @@ terraform plan
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_cloudflare"></a> [cloudflare](#provider\_cloudflare) | 5.13.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| ---- | ------- |
+| <a name="provider_cloudflare"></a> [cloudflare](#provider\_cloudflare) | 5.19.1 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.9.0 |
 
 ## Modules
 
@@ -276,16 +276,17 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [cloudflare_dns_record.tunnel_cname](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/dns_record) | resource |
 | [cloudflare_zero_trust_tunnel_cloudflared.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/zero_trust_tunnel_cloudflared) | resource |
 | [cloudflare_zero_trust_tunnel_cloudflared_config.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/zero_trust_tunnel_cloudflared_config) | resource |
 | [random_password.tunnel_secret](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
+| [cloudflare_zero_trust_tunnel_cloudflared_token.this](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/data-sources/zero_trust_tunnel_cloudflared_token) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_account_id"></a> [account\_id](#input\_account\_id) | Cloudflare Account ID | `string` | n/a | yes |
 | <a name="input_config_enabled"></a> [config\_enabled](#input\_config\_enabled) | Enable tunnel configuration (ingress rules). Set to false if managing config elsewhere. | `bool` | `true` | no |
 | <a name="input_default_service"></a> [default\_service](#input\_default\_service) | Default service for catch-all ingress rule (required) | `string` | `"http_status:404"` | no |
@@ -297,11 +298,11 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_account_id"></a> [account\_id](#output\_account\_id) | Cloudflare Account ID |
 | <a name="output_dns_records"></a> [dns\_records](#output\_dns\_records) | Created DNS records |
 | <a name="output_tunnel_cname"></a> [tunnel\_cname](#output\_tunnel\_cname) | CNAME target for the tunnel |
 | <a name="output_tunnel_id"></a> [tunnel\_id](#output\_tunnel\_id) | ID of the created Cloudflare Tunnel |
 | <a name="output_tunnel_name"></a> [tunnel\_name](#output\_tunnel\_name) | Name of the created Cloudflare Tunnel |
-| <a name="output_tunnel_token"></a> [tunnel\_token](#output\_tunnel\_token) | Tunnel token for cloudflared to connect (sensitive) |
+| <a name="output_tunnel_token"></a> [tunnel\_token](#output\_tunnel\_token) | Tunnel token for cloudflared to connect with `tunnel run --token` (sensitive) |
 <!-- END_TF_DOCS -->

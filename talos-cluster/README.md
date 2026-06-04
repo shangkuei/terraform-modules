@@ -249,7 +249,7 @@ See repository LICENSE file.
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | >= 2.0.0 |
 | <a name="requirement_talos"></a> [talos](#requirement\_talos) | >= 0.7.0 |
@@ -257,9 +257,9 @@ See repository LICENSE file.
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_local"></a> [local](#provider\_local) | 2.6.1 |
-| <a name="provider_talos"></a> [talos](#provider\_talos) | 0.9.0 |
+| ---- | ------- |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.9.0 |
+| <a name="provider_talos"></a> [talos](#provider\_talos) | 0.11.0 |
 
 ## Modules
 
@@ -268,7 +268,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [local_file.cilium_values](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.control_plane_config](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 | [local_file.control_plane_patches](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
@@ -287,7 +287,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_additional_control_plane_patches"></a> [additional\_control\_plane\_patches](#input\_additional\_control\_plane\_patches) | Additional YAML patches to apply to control plane nodes (merged with Tailscale patches) | `list(string)` | `[]` | no |
 | <a name="input_additional_worker_patches"></a> [additional\_worker\_patches](#input\_additional\_worker\_patches) | Additional YAML patches to apply to worker nodes (merged with Tailscale patches) | `list(string)` | `[]` | no |
 | <a name="input_cert_sans"></a> [cert\_sans](#input\_cert\_sans) | Additional Subject Alternative Names (SANs) for API server certificate (Tailscale IPs will be added automatically) | `list(string)` | `[]` | no |
@@ -310,12 +310,12 @@ No modules.
 | <a name="input_talos_version"></a> [talos\_version](#input\_talos\_version) | Talos Linux version (e.g., v1.8.0) | `string` | `"v1.8.0"` | no |
 | <a name="input_use_dhcp_for_physical_interface"></a> [use\_dhcp\_for\_physical\_interface](#input\_use\_dhcp\_for\_physical\_interface) | Use DHCP for physical network interface configuration | `bool` | `true` | no |
 | <a name="input_wipe_install_disk"></a> [wipe\_install\_disk](#input\_wipe\_install\_disk) | Wipe the installation disk before installing Talos | `bool` | `false` | no |
-| <a name="input_worker_nodes"></a> [worker\_nodes](#input\_worker\_nodes) | Map of worker nodes with their configuration (using Tailscale IPs) | <pre>map(object({<br/>    tailscale_ipv4 = string           # Tailscale IPv4 address (100.64.0.0/10 range)<br/>    tailscale_ipv6 = optional(string) # Tailscale IPv6 address (fd7a:115c:a1e0::/48 range)<br/>    physical_ip    = optional(string) # Physical IP (for initial bootstrapping only)<br/>    install_disk   = string<br/>    hostname       = optional(string)<br/>    interface      = optional(string, "tailscale0")<br/>    platform       = optional(string, "metal")                        # Platform type: metal, metal-arm64, metal-secureboot, aws, gcp, azure, etc.<br/>    extensions     = optional(list(string), ["siderolabs/tailscale"]) # Talos system extensions (default: Tailscale only)<br/>    # SBC overlay configuration (for Raspberry Pi, Rock Pi, etc.)<br/>    overlay = optional(object({<br/>      image = string # Overlay image (e.g., "siderolabs/sbc-raspberrypi")<br/>      name  = string # Overlay name (e.g., "rpi_generic", "rpi_5")<br/>    }))<br/>    # Kubernetes topology and node labels<br/>    region      = optional(string)          # topology.kubernetes.io/region<br/>    zone        = optional(string)          # topology.kubernetes.io/zone<br/>    arch        = optional(string)          # kubernetes.io/arch (e.g., amd64, arm64)<br/>    os          = optional(string)          # kubernetes.io/os (e.g., linux)<br/>    node_labels = optional(map(string), {}) # Additional node-specific labels<br/>    # OpenEBS Replicated Storage configuration<br/>    openebs_storage       = optional(bool, false)  # Enable OpenEBS storage on this node<br/>    openebs_disk          = optional(string)       # Storage disk device (e.g., /dev/nvme0n1, /dev/sdb)<br/>    openebs_hugepages_2mi = optional(number, 1024) # Number of 2MiB hugepages (1024 = 2GiB, required for Mayastor)<br/>    # OpenEBS ZFS LocalPV configuration - supports multiple pools per node<br/>    zfs_pools = optional(list(object({<br/>      name  = string               # Pool name (e.g., "zpool", "tank", "data")<br/>      disks = list(string)         # Disk devices (e.g., ["/dev/sdb"] or ["/dev/sdb", "/dev/sdc"])<br/>      type  = optional(string, "") # Pool type: "" (single/stripe), "mirror", "raidz", "raidz2", "raidz3"<br/>    })), [])<br/>  }))</pre> | `{}` | no |
+| <a name="input_worker_nodes"></a> [worker\_nodes](#input\_worker\_nodes) | Map of worker nodes with their configuration (using Tailscale IPs) | <pre>map(object({<br/>    tailscale_ipv4 = string           # Tailscale IPv4 address (100.64.0.0/10 range)<br/>    tailscale_ipv6 = optional(string) # Tailscale IPv6 address (fd7a:115c:a1e0::/48 range)<br/>    physical_ip    = optional(string) # Physical IP (for initial bootstrapping only)<br/>    install_disk   = string<br/>    hostname       = optional(string)<br/>    interface      = optional(string, "tailscale0")<br/>    platform       = optional(string, "metal")                        # Platform type: metal, metal-arm64, metal-secureboot, aws, gcp, azure, etc.<br/>    extensions     = optional(list(string), ["siderolabs/tailscale"]) # Talos system extensions (default: Tailscale only)<br/>    # SBC overlay configuration (for Raspberry Pi, Rock Pi, etc.)<br/>    overlay = optional(object({<br/>      image = string # Overlay image (e.g., "siderolabs/sbc-raspberrypi")<br/>      name  = string # Overlay name (e.g., "rpi_generic", "rpi_5")<br/>    }))<br/>    # Kubernetes topology and node labels<br/>    region      = optional(string)          # topology.kubernetes.io/region<br/>    zone        = optional(string)          # topology.kubernetes.io/zone<br/>    arch        = optional(string)          # kubernetes.io/arch (e.g., amd64, arm64)<br/>    os          = optional(string)          # kubernetes.io/os (e.g., linux)<br/>    node_labels = optional(map(string), {}) # Additional node-specific labels<br/>    # OpenEBS Mayastor (Replicated Storage) configuration<br/>    # Mayastor uses raw block devices directly via SPDK - no partitioning/formatting needed<br/>    # The disk specified here is used for DiskPool creation in Kubernetes (not managed by Talos)<br/>    # NOTE: The disk must be empty/unpartitioned. If it has partitions, wipe them first:<br/>    #   talosctl wipe disk <partition> --drop-partition<br/>    openebs_storage       = optional(bool, false)  # Enable OpenEBS Mayastor on this node (adds node labels + hugepages)<br/>    openebs_disk          = optional(string)       # Raw block device for Mayastor (e.g., /dev/sdb, /dev/disk/by-id/wwn-xxx)<br/>    openebs_hugepages_2mi = optional(number, 1024) # Number of 2MiB hugepages (1024 = 2GiB, required for Mayastor)<br/>    # OpenEBS ZFS LocalPV configuration - supports multiple pools per node<br/>    zfs_pools = optional(list(object({<br/>      name  = string               # Pool name (e.g., "zpool", "tank", "data")<br/>      disks = list(string)         # Disk devices (e.g., ["/dev/sdb"] or ["/dev/sdb", "/dev/sdc"])<br/>      type  = optional(string, "") # Pool type: "" (single/stripe), "mirror", "raidz", "raidz2", "raidz3"<br/>    })), [])<br/>  }))</pre> | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_cilium_values_path"></a> [cilium\_values\_path](#output\_cilium\_values\_path) | Path to generated Cilium Helm values file (only when Cilium CNI is enabled) |
 | <a name="output_client_configs"></a> [client\_configs](#output\_client\_configs) | Client configuration files for cluster access |
 | <a name="output_client_configuration"></a> [client\_configuration](#output\_client\_configuration) | Talos client configuration for cluster management |
