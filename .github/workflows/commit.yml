@@ -1,0 +1,26 @@
+name: Commit Checks
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  quick-checks:
+    name: Quick Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Run fast pre-commit hooks
+        uses: pre-commit/action@v3.0.1
+        env:
+          SKIP: terraform_validate,terraform_docs,terraform_tflint,tfsec,shellcheck
