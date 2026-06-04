@@ -373,29 +373,6 @@ locals {
     }
   })
 
-  # OpenEBS ZFS LocalPV configuration patch
-  # - Adds kubelet extraMounts for ZFS encryption keys directory (Talos-compatible path)
-  openebs_zfs_patch = yamlencode({
-    machine = {
-      kubelet = {
-        extraMounts = [
-          {
-            destination = "/var/openebs/encr-keys"
-            type        = "bind"
-            source      = "/var/openebs/encr-keys"
-            options = [
-              "bind",
-              "rshared",
-              "rw"
-            ]
-          }
-        ]
-      }
-    }
-  })
-
-  # Check if any worker nodes have ZFS pool configuration
-  openebs_zfs_enabled = anytrue([for k, v in var.worker_nodes : length(v.zfs_pools) > 0])
 }
 
 # =============================================================================
