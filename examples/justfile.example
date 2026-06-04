@@ -1,0 +1,12 @@
+# Snippet to copy into your downstream project's justfile.
+# Installs Claude Code skills for the terraform-modules consumed by this project,
+# pinned to the same ?ref= used in your module sources.
+
+install-skills:
+    curl -fsSL https://raw.githubusercontent.com/shangkuei/terraform-modules/main/scripts/install-skills.sh \
+      | bash -s -- {{justfile_directory()}}
+
+# Or, if you vendor the script locally (recommended for offline/CI):
+#
+# install-skills:
+#     bash scripts/install-skills.sh {{justfile_directory()}}

@@ -1,0 +1,14 @@
+# Snippet to copy into your downstream project's Makefile.
+# Installs Claude Code skills for the terraform-modules consumed by this project,
+# pinned to the same ?ref= used in your module sources.
+
+.PHONY: install-skills
+install-skills:
+	curl -fsSL https://raw.githubusercontent.com/shangkuei/terraform-modules/main/scripts/install-skills.sh \
+	  | bash -s -- $(CURDIR)
+
+# Or, if you vendor the script locally (recommended for offline/CI):
+#
+# .PHONY: install-skills
+# install-skills:
+# 	bash scripts/install-skills.sh $(CURDIR)

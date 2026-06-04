@@ -177,6 +177,34 @@ terraform validate
 terraform fmt -recursive
 ```
 
+## Claude Code Skills
+
+Each module ships a Claude Code [skill](.claude/skills/) at `.claude/skills/<module>/SKILL.md` that
+documents the module's canonical block, required vs optional inputs, key outputs, and gotchas.
+Skills are versioned with the module: a downstream project that pins `?ref=v1.2.3` for a module
+gets the SKILL.md from `v1.2.3` of that module.
+
+### Installing skills in a downstream project
+
+`scripts/install-skills.sh` scans your `*.tf` files for module sources pointing at this repo, then
+caches and symlinks the matching SKILL.md into your project's `.claude/skills/<module>/` at the
+ref you pinned. Re-running is idempotent; stale skills (modules you removed) are cleaned up.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shangkuei/terraform-modules/main/scripts/install-skills.sh \
+  | bash -s -- .
+```
+
+Wire it into your task runner so it re-runs after every `terraform init`:
+
+- [`examples/justfile.example`](examples/justfile.example) — `just install-skills`
+- [`examples/Makefile.example`](examples/Makefile.example) — `make install-skills`
+
+The script honors three env vars: `TF_SKILL_REPO`, `TF_SKILL_CACHE` (default `~/.cache/terraform-module-skills`),
+and `SKILLS_DIR` (default `.claude/skills`). If the same module is pinned at multiple refs across
+a project, the script installs the latest (semver-sorted) and prints a notice listing the older
+blocks that should be upgraded.
+
 ## Repository Structure
 
 ```text
@@ -201,6 +229,18 @@ terraform-modules/
 │   ├── outputs.tf
 │   ├── versions.tf
 │   └── README.md
+│
+├── .claude/skills/          # Claude Code skills, one per module (versioned with the repo)
+│   ├── cloudflared/SKILL.md
+│   ├── gitops/SKILL.md
+│   └── talos-cluster/SKILL.md
+│
+├── scripts/
+│   └── install-skills.sh   # Symlinks the right SKILL.md into downstream .claude/skills/
+│
+├── examples/
+│   ├── justfile.example    # Downstream task runner snippet
+│   └── Makefile.example
 │
 ├── AGENTS.md               # AI assistant ground rules (vendor-neutral)
 ├── CLAUDE.md               # Claude Code-specific ground rules
