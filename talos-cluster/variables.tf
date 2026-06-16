@@ -48,6 +48,7 @@ variable "control_plane_nodes" {
     hostname       = optional(string)
     interface      = optional(string, "tailscale0")
     platform       = optional(string, "metal")                        # Platform type: metal, metal-arm64, metal-secureboot, aws, gcp, azure, etc.
+    secure_boot    = optional(bool, false)                            # SecureBoot: UKI installer + TPM-sealed disk encryption (requires x86/UEFI SecureBoot + TPM 2.0)
     extensions     = optional(list(string), ["siderolabs/tailscale"]) # Talos system extensions (default: Tailscale only)
     # SBC overlay configuration (for Raspberry Pi, Rock Pi, etc.)
     overlay = optional(object({
@@ -83,6 +84,7 @@ variable "worker_nodes" {
     hostname       = optional(string)
     interface      = optional(string, "tailscale0")
     platform       = optional(string, "metal")                        # Platform type: metal, metal-arm64, metal-secureboot, aws, gcp, azure, etc.
+    secure_boot    = optional(bool, false)                            # SecureBoot: UKI installer + TPM-sealed disk encryption (requires x86/UEFI SecureBoot + TPM 2.0)
     extensions     = optional(list(string), ["siderolabs/tailscale"]) # Talos system extensions (default: Tailscale only)
     # SBC overlay configuration (for Raspberry Pi, Rock Pi, etc.)
     overlay = optional(object({

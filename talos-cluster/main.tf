@@ -283,28 +283,61 @@ locals {
 
   # Platform-specific installer image URLs using image factory
   # Image factory URL format: factory.talos.dev/<installer-type>/<schematic-id>:<talos-version>
-  # Different platforms use different installer types:
-  #   - metal, metal-arm64 → installer
-  #   - metal-secureboot → metal-installer-secureboot
-  #   - aws, azure, gcp, etc. → installer
+  # The installer image is multi-arch (arch comes from the schematic); these only
+  # select SecureBoot vs not. `metal-installer` and `installer` both resolve for
+  # amd64 and arm64. Platform → installer type:
+  #   - metal, metal-amd64        → metal-installer
+  #   - metal-arm64               → installer (matches existing SBC nodes)
+  #   - metal-secureboot          → metal-installer-secureboot
+  #   - aws, azure, gcp, etc.     → installer (fallback)
+  # SecureBoot (secure_boot = true) overrides to metal-installer-secureboot.
 
   # Map platform to installer type
   platform_installer_types = {
     "metal"            = "metal-installer"
+    "metal-amd64"      = "metal-installer"
+    "metal-arm64"      = "installer"
     "metal-secureboot" = "metal-installer-secureboot"
+  }
+
+  # A node uses SecureBoot when secure_boot = true (preferred) or, for backward
+  # compatibility, when platform = "metal-secureboot". SecureBoot selects the UKI
+  # installer image (metal-installer-secureboot) and enables TPM-sealed disk
+  # encryption.
+  cp_secure_boot = {
+    for k, v in var.control_plane_nodes :
+    k => v.secure_boot || v.platform == "metal-secureboot"
+  }
+  worker_secure_boot = {
+    for k, v in var.worker_nodes :
+    k => v.secure_boot || v.platform == "metal-secureboot"
+  }
+
+  # TPM-sealed disk encryption (LUKS2) applied to SecureBoot nodes. PCR sealing
+  # ties the keys to the SecureBoot state, so only signed Talos can unlock STATE
+  # and EPHEMERAL.
+  tpm_disk_encryption = {
+    state = {
+      provider = "luks2"
+      keys     = [{ slot = 0, tpm = {} }]
+    }
+    ephemeral = {
+      provider = "luks2"
+      keys     = [{ slot = 0, tpm = {} }]
+    }
   }
 
   # Generate per-node installer URLs using node-specific schematics
   # Control plane installer URLs
   cp_installer_image_urls = {
     for k, v in var.control_plane_nodes :
-    k => "factory.talos.dev/${lookup(local.platform_installer_types, coalesce(v.platform, "metal"), "installer")}/${talos_image_factory_schematic.nodes[local.node_to_schematic_key[k]].id}:${var.talos_version}"
+    k => "factory.talos.dev/${local.cp_secure_boot[k] ? "metal-installer-secureboot" : lookup(local.platform_installer_types, coalesce(v.platform, "metal"), "installer")}/${talos_image_factory_schematic.nodes[local.node_to_schematic_key[k]].id}:${var.talos_version}"
   }
 
   # Worker installer URLs
   worker_installer_image_urls = {
     for k, v in var.worker_nodes :
-    k => "factory.talos.dev/${lookup(local.platform_installer_types, coalesce(v.platform, "metal"), "installer")}/${talos_image_factory_schematic.nodes[local.node_to_schematic_key[k]].id}:${var.talos_version}"
+    k => "factory.talos.dev/${local.worker_secure_boot[k] ? "metal-installer-secureboot" : lookup(local.platform_installer_types, coalesce(v.platform, "metal"), "installer")}/${talos_image_factory_schematic.nodes[local.node_to_schematic_key[k]].id}:${var.talos_version}"
   }
 
   # Tailscale-specific machine patches
@@ -349,6 +382,16 @@ locals {
         }
       )
     }
+  })
+
+  # Remove the auto-generated HostnameConfig document. Talos >= 1.13 emits a
+  # `HostnameConfig` (auto: stable) document; per-node static hostnames are set
+  # via machine.network.hostname in the *-patch.yaml files, and Talos rejects
+  # the hostname being present in both v1alpha1 and a HostnameConfig document.
+  hostname_config_delete_patch = yamlencode({
+    apiVersion = "v1alpha1"
+    kind       = "HostnameConfig"
+    "$patch"   = "delete"
   })
 
   # OpenEBS LocalPV Hostpath configuration patch
@@ -396,6 +439,7 @@ data "talos_machine_configuration" "control_plane" {
     var.cni_name == "cilium" ? [local.cilium_cluster_config] : [],
     [local.tailscale_machine_patch],
     [local.kubeprism_patch],
+    [local.hostname_config_delete_patch],
     var.additional_control_plane_patches
   )
 }
@@ -447,6 +491,10 @@ resource "local_file" "control_plane_patches" {
         kernel = {
           modules = [{ name = "zfs" }]
         }
+      } : {},
+      # SecureBoot TPM-sealed disk encryption (STATE + EPHEMERAL)
+      local.cp_secure_boot[each.key] ? {
+        systemDiskEncryption = local.tpm_disk_encryption
       } : {}
     )
   })
@@ -493,6 +541,7 @@ data "talos_machine_configuration" "worker" {
     var.cni_name == "cilium" ? [local.cilium_cluster_config] : [],
     [local.tailscale_machine_patch],
     [local.kubeprism_patch],
+    [local.hostname_config_delete_patch],
     var.openebs_hostpath_enabled ? [local.openebs_hostpath_patch] : [],
     # Note: ZFS extraMounts are added per-node in worker_patches based on zfs_pools config
     var.additional_worker_patches
@@ -579,6 +628,10 @@ resource "local_file" "worker_patches" {
             }
           ]
         }
+      } : {},
+      # SecureBoot TPM-sealed disk encryption (STATE + EPHEMERAL)
+      local.worker_secure_boot[each.key] ? {
+        systemDiskEncryption = local.tpm_disk_encryption
       } : {}
     )
   })
@@ -615,8 +668,9 @@ resource "local_file" "worker_zfs_pool_setup" {
 
   filename = "${local.output_dir}/worker-${each.key}-zfs-pool-setup.sh"
   content = templatefile("${path.module}/templates/zfs-pool-setup.sh.tftpl", {
-    pools     = each.value.zfs_pools
-    node_name = coalesce(each.value.hostname, each.key)
+    pools       = each.value.zfs_pools
+    node_name   = coalesce(each.value.hostname, each.key)
+    script_name = "worker-${each.key}-zfs-pool-setup.sh"
   })
 
   file_permission = "0755"

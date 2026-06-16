@@ -34,7 +34,7 @@
 #   kubectl wait --for=condition=ready pod/zfs-debug-${node_name} -n kube-system --timeout=60s
 #
 # Step 3: Copy this script into the pod and run it
-#   kubectl cp worker-${node_name}-zfs-pool-setup.sh kube-system/zfs-debug-${node_name}:/tmp/setup.sh
+#   kubectl cp ${script_name} kube-system/zfs-debug-${node_name}:/tmp/setup.sh
 #   kubectl exec -it zfs-debug-${node_name} -n kube-system -- /bin/sh /tmp/setup.sh
 #
 # Step 4: Verify the pool was created
