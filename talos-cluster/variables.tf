@@ -275,6 +275,17 @@ variable "cilium_helm_values" {
   }
 }
 
+variable "gateway_api_version" {
+  description = "Gateway API CRD release tag to install as Talos extraManifests when Cilium Gateway API is enabled (kubernetes-sigs/gateway-api). Pin to the latest stable release."
+  type        = string
+  default     = "v1.5.1"
+
+  validation {
+    condition     = can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+$", var.gateway_api_version))
+    error_message = "Gateway API version must be a release tag like 'v1.5.1'."
+  }
+}
+
 # =============================================================================
 # Security Configuration
 # =============================================================================

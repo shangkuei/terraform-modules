@@ -194,7 +194,7 @@ locals {
   )
 
   # Gateway API CRD URLs (standard CRDs from kubernetes-sigs/gateway-api)
-  gateway_api_version = "v1.4.0"
+  gateway_api_version = var.gateway_api_version
   gateway_api_crds = [
     "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/${local.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml",
     "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/${local.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gateways.yaml",
